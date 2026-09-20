@@ -558,6 +558,18 @@ files = [
 ]
 
 [[package]]
+name = "blinker"
+version = "1.9.0"
+description = "Fast, simple object-to-object and broadcast signaling"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "blinker-1.9.0-py3-none-any.whl", hash = "sha256:ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc"},
+    {file = "blinker-1.9.0.tar.gz", hash = "sha256:b4ce2265a7abece45e7cc896e98dbebe6cead56bcf805a3d23136d145f5445bf"},
+]
+
+[[package]]
 name = "cachetools"
 version = "7.1.8"
 description = "Extensible memoizing collections and decorators"
@@ -1713,6 +1725,41 @@ cu12 = ["nvidia-cutlass-dsl (>=4.6.2a0)"]
 cu13 = ["nvidia-cutlass-dsl[cu13] (>=4.6.2a0)"]
 
 [[package]]
+name = "flask"
+version = "3.1.3"
+description = "A simple framework for building complex web applications."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "flask-3.1.3-py3-none-any.whl", hash = "sha256:f4bcbefc124291925f1a26446da31a5178f9483862233b23c0c96a20701f670c"},
+    {file = "flask-3.1.3.tar.gz", hash = "sha256:0ef0e52b8a9cd932855379197dd8f94047b359ca0a78695144304cb45f87c9eb"},
+]
+
+[package.dependencies]
+blinker = ">=1.9.0"
+click = ">=8.1.3"
+itsdangerous = ">=2.2.0"
+jinja2 = ">=3.1.2"
+markupsafe = ">=2.1.1"
+werkzeug = ">=3.1.0"
+
+[package.extras]
+async = ["asgiref (>=3.2)"]
+dotenv = ["python-dotenv"]
+
+[[package]]
+name = "flatbuffers"
+version = "25.12.19"
+description = "The FlatBuffers serialization format for Python"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "flatbuffers-25.12.19-py2.py3-none-any.whl", hash = "sha256:7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4"},
+]
+
+[[package]]
 name = "frozenlist"
 version = "1.8.0"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -2475,6 +2522,18 @@ mypy-extensions = ">=1.1.0"
 
 [package.extras]
 colors = ["colorama"]
+
+[[package]]
+name = "itsdangerous"
+version = "2.2.0"
+description = "Safely pass data to untrusted environments and back."
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "itsdangerous-2.2.0-py3-none-any.whl", hash = "sha256:c6242fc49e35958c8b15141343aa660db5fc54d4f13a1db01a3f5891b98700ef"},
+    {file = "itsdangerous-2.2.0.tar.gz", hash = "sha256:e0050c0b7da1eea53ffaf149c0cfbb5c6e2e2b69c4bef22c81fa6eb73e5f6173"},
+]
 
 [[package]]
 name = "jinja2"
@@ -4365,6 +4424,50 @@ docs = ["nvidia_sphinx_theme", "sphinx"]
 test = ["pytest", "setuptools"]
 
 [[package]]
+name = "onnxruntime"
+version = "1.30.0"
+description = "ONNX Runtime is a runtime accelerator for Machine Learning models"
+optional = false
+python-versions = ">=3.11"
+groups = ["main"]
+files = [
+    {file = "onnxruntime-1.30.0-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:f36c87ec504f4f328e968ee322e4ba9682abe66280b3425625afcbed5333fed7"},
+    {file = "onnxruntime-1.30.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:bac3aee7b40acd805659fd81a2acd6096312d5b0f014c97ddfe75fb4c1644627"},
+    {file = "onnxruntime-1.30.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:fd54b314ea385bcecac69ab431f020ba503e3878dad4ebb645fec5a24b041242"},
+    {file = "onnxruntime-1.30.0-cp311-cp311-win_amd64.whl", hash = "sha256:0edd0145a6e3fce8a1276491dc784d615e3c58bcb952c9b4e5c876d5c6a12ad7"},
+    {file = "onnxruntime-1.30.0-cp311-cp311-win_arm64.whl", hash = "sha256:16506cfa5d218850f2b46e0edce1b952121f2f84f8e0074dafe15f4787f0c8fb"},
+    {file = "onnxruntime-1.30.0-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:001ed726c9bd5e2bc92faade7d37d889e9606a350b7d5529f0227df2e3bb57fd"},
+    {file = "onnxruntime-1.30.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:6c32a000d5139a38ba9349030b0032e3331acb559d596b22738d9d2b343a2b83"},
+    {file = "onnxruntime-1.30.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:fa688e7891a6aa206636fe7372e27ee75fd17713289f6b4fc7b190e0a7de9328"},
+    {file = "onnxruntime-1.30.0-cp312-cp312-win_amd64.whl", hash = "sha256:f3501472571f1b1eee50e017851e7929f5ea37312d2d8c2494a19e8fc58b4a38"},
+    {file = "onnxruntime-1.30.0-cp312-cp312-win_arm64.whl", hash = "sha256:dc4c706f1935ebb62356e6a095b047859badd854482c40560888e95c328ed262"},
+    {file = "onnxruntime-1.30.0-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:05e4fc41711d1f4abd19a9124b5be7a65a506cb2670a7f14b16162ef13c58134"},
+    {file = "onnxruntime-1.30.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:5327cf6aa15a02bad805fac8bd6882a62571e8b72f6f2938a8f37e6bd1966ce9"},
+    {file = "onnxruntime-1.30.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:86f940afc801ea9681a4da8af84fbe95e1d9ea7d80903952cc1bfad54faad38f"},
+    {file = "onnxruntime-1.30.0-cp313-cp313-win_amd64.whl", hash = "sha256:4b63041bd623a9a9ac5e353948436c6fa7f43edd12d6b4a4ebc340bca959ba93"},
+    {file = "onnxruntime-1.30.0-cp313-cp313-win_arm64.whl", hash = "sha256:c389b6887fc95e0fcb80e89b156bc2cb18e662c29df55e9326fe64140e7d7b4f"},
+    {file = "onnxruntime-1.30.0-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:e5224ba2b00284cb1c48b3edcd303c109245d66df9ec1b861858fd6de672a38e"},
+    {file = "onnxruntime-1.30.0-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:3f9e002417f1e3bbb31ed43dafa4f22ca1b2b68832244fdee192fcaa1ae19bca"},
+    {file = "onnxruntime-1.30.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:8b6169c16a48429890d2f4a0c774ebf54dfe9066a998514aad0518a16d398547"},
+    {file = "onnxruntime-1.30.0-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:d2184fddb6798136e7c478244391ca82443f5c757f59f15bb9e5ad2da5e03175"},
+    {file = "onnxruntime-1.30.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:8b611d24db2954545ce6bd9acd4670183cb368e4642450de7a9ab6474eb374ec"},
+    {file = "onnxruntime-1.30.0-cp314-cp314-win_amd64.whl", hash = "sha256:3bdd1752a8502ac1a7ccc6e878d16db6943df574d54ed7f01058a6806ae05be4"},
+    {file = "onnxruntime-1.30.0-cp314-cp314-win_arm64.whl", hash = "sha256:83d543843cbd352cfa9996a6c7b92f8a480f114a18f95ff2a1acaf6921e85b6d"},
+    {file = "onnxruntime-1.30.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:265de607ba6f9814264e1d5d413fa7069d70f48e3049b5e460b3b04bdfcef294"},
+    {file = "onnxruntime-1.30.0-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:67ad7f03433b6462c627d0f555dece80e6a26bc71e8542ced35cebd32142d1b7"},
+]
+
+[package.dependencies]
+flatbuffers = "*"
+numpy = ">=1.21.6"
+packaging = "*"
+protobuf = ">=4.25.8"
+
+[package.extras]
+quantization = ["ml_dtypes"]
+symbolic = ["sympy"]
+
+[[package]]
 name = "openai"
 version = "3.13.0"
 description = "The official Python library for the openai API"
@@ -4710,6 +4813,23 @@ optional = ["typing-extensions (>=4)"]
 re2 = ["google-re2 (>=1.1)"]
 
 [[package]]
+name = "pathvalidate"
+version = "3.3.1"
+description = "pathvalidate is a Python library to sanitize/validate a string such as filenames/file-paths/etc."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "pathvalidate-3.3.1-py3-none-any.whl", hash = "sha256:5263baab691f8e1af96092fa5137ee17df5bdfbd6cff1fcac4d6ef4bc2e1735f"},
+    {file = "pathvalidate-3.3.1.tar.gz", hash = "sha256:b18c07212bfead624345bb8e1d6141cdcf15a39736994ea0b94035ad2b1ba177"},
+]
+
+[package.extras]
+docs = ["Sphinx (>=2.4)", "sphinx_rtd_theme (>=1.2.2)", "urllib3 (<2)"]
+readme = ["path (>=13,<18)", "readmemaker (>=1.2.0)"]
+test = ["Faker (>=1.0.8)", "allpairspy (>=2)", "click (>=6.2)", "pytest (>=6.0.1)", "pytest-md-report (>=0.6.2)"]
+
+[[package]]
 name = "pillow"
 version = "12.3.0"
 description = "Python Imaging Library (fork)"
@@ -4813,6 +4933,35 @@ mic = ["olefile"]
 test-arrow = ["arro3-compute", "arro3-core", "nanoarrow", "pyarrow"]
 tests = ["coverage (>=7.4.2)", "defusedxml", "markdown2", "olefile", "packaging", "pytest", "pytest-cov", "pytest-timeout", "pytest-xdist", "setuptools", "trove-classifiers (>=2024.10.12)"]
 xmp = ["defusedxml"]
+
+[[package]]
+name = "piper-tts"
+version = "1.8.0"
+description = "Fast and local neural text-to-speech engine"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "piper_tts-1.8.0-cp39-abi3-macosx_10_9_x86_64.whl", hash = "sha256:98c7dd791b2be0f8732e5c9cefd86c54200ac0360e43c643c937bf18ac0e941a"},
+    {file = "piper_tts-1.8.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:33e7425933e9290fe651ae127916ed1ca6104cfa3d94e9049295dd3a5c449382"},
+    {file = "piper_tts-1.8.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:3f60c1917de6d8e8033f395878ad3f88f6dfee88a8b05f98971a275f76a38484"},
+    {file = "piper_tts-1.8.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:25b4d3f31ff70c8fa7151908e00aaa5650cbdf16bca8fcf21299f3941b89a7d3"},
+    {file = "piper_tts-1.8.0-cp39-abi3-win_amd64.whl", hash = "sha256:5da9bfdb05dfe15da3536859d422e605483ffa6d2b3ec2c5b9593bae6b5aa6a4"},
+    {file = "piper_tts-1.8.0.tar.gz", hash = "sha256:830588aded347df579c91a32703e0fc2a3685d84f1e3533b14f2de69135d4904"},
+]
+
+[package.dependencies]
+onnxruntime = ">=1,<2"
+pathvalidate = ">=3,<4"
+
+[package.extras]
+alignment = ["onnx (>=1,<2)"]
+dev = ["black (==24.8.0)", "build (==1.2.2)", "cmake (>=3.18,<4)", "flake8 (==7.1.1)", "isort (==5.13.2)", "mypy (==1.14.0)", "ninja (>=1,<2)", "onnx (>=1,<2)", "pylint (==3.2.7)", "pytest (==8.3.4)", "scikit-build (<1)"]
+http = ["flask (>=3,<4)"]
+ja = ["pyopenjtalk-plus (>=0.4,<1)"]
+th = ["pandas (>=2,<3)", "tltk (>=1.6.8,<1.11)", "unicode-rbnf (>=2.4.0,<3)"]
+train = ["cython (>=3,<4)", "jsonargparse[signatures] (>=4.27.7)", "librosa (<1)", "lightning (>=2,<3)", "onnx (>=1,<2)", "pysilero-vad (>=2.1,<3)", "tensorboard (>=2,<3)", "tensorboardX (>=2,<3)", "torch (>=2,<3)"]
+zh = ["g2pW (>=0.1.1,<1)", "sentence-stream (>=1.2.1,<2)", "transformers (>=4,<6)", "unicode-rbnf (>=2.4.0,<3)"]
 
 [[package]]
 name = "platformdirs"
@@ -7921,6 +8070,24 @@ files = [
 ]
 
 [[package]]
+name = "werkzeug"
+version = "3.1.8"
+description = "The comprehensive WSGI web application library."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "werkzeug-3.1.8-py3-none-any.whl", hash = "sha256:63a77fb8892bf28ebc3178683445222aa500e48ebad5ec77b0ad80f8726b1f50"},
+    {file = "werkzeug-3.1.8.tar.gz", hash = "sha256:9bad61a4268dac112f1c5cd4630a56ede601b6ed420300677a869083d70a4c44"},
+]
+
+[package.dependencies]
+markupsafe = ">=2.1.1"
+
+[package.extras]
+watchdog = ["watchdog (>=2.3)"]
+
+[[package]]
 name = "win32-setctime"
 version = "1.2.0"
 description = "A small Python utility to set file creation time on Windows"
@@ -8140,5 +8307,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.14 <3.15, !=3.14.1"
-content-hash = "9915770ad953d660441408f75e81e8dfe31ab264b3ed0b14d5b3f66eb12e944b"
+python-versions = ">=3.14, <3.15, !=3.14.1"
+content-hash = "48e9a563ab3ba95cf82f5ffd4c99da9be7faa0316ca0c6155576d97c50a8b1c8"

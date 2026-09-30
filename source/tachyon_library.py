@@ -61,6 +61,7 @@ def execute_list( command_list: list ) -> int:
         return 0
     else:
         tyon_log( f"executing command: '{commands}'" )
+        completed = None
         # check = false silences exception on command non-successful exit but not other exceptions
         try: completed = subprocess.run( commands, check = False )
         except Exception as err: log_exception_generic( err, "Unknown Exception" )

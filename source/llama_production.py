@@ -55,7 +55,14 @@ gemma4_26_a4b = llm_config(
     "gemma-4-26B-A4B-it-Q4_0",
     "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-Q4_0.gguf",
     gpu_split_full_both,
-    128000
+    96000
+)
+
+gemma4_26_a4b_q5 = llm_config(
+    "gemma-4-26B-A4B-it-UD-Q5_K_S",
+    "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-UD-Q5_K_S.gguf",
+    gpu_split_ratio = gpu_split_full_both,
+    context_size = 64000
 )
 
 
@@ -68,7 +75,7 @@ def run_gemma4_moe() -> None:
         "--alias", model.model_name,
         "--model", model.model_file,
         "--models-max", "1",
-        "-c", "96000",
+        "-c", str(model.context_size),
         # NOTE: Accuracy suffers really badly if you quantize the kv cache
         "--cache-type-k", "bf16",
         "--cache-type-v", "bf16",
@@ -82,10 +89,51 @@ def run_gemma4_moe() -> None:
         # "--reasoning-format", "deepseek",
         "--reasoning", "off",
         "--tensor-split", model.gpu_split_ratio,
-        "--tools", "read_file,grep_search",
+        # Pointless, only relevant for llama.ui
+        # "--tools", "read_file,grep_search",
+
+        # Multi-Modal Projector
+        "--mmproj", "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-mmproj-BF16.gguf",
+        # Doesn't fit unless we push the mmproj to the CPU, it slows down image processing a lot.
+        "--no-mmproj-offload",
+
+        # Network Settings
         "--host", host_ip,
         "--port", str(port)
     ] )
+
+def run_gemma4_moe_q5_k_s() -> None:
+    model = gemma4_26_a4b_q5
+    tyon.execute_list([
+        "/usr/bin/llama-server",
+        "--alias", model.model_name,
+        "--model", model.model_file,
+        "--models-max", "1",
+        "-c", str(model.context_size),
+        # NOTE: Accuracy suffers really badly if you quantize the kv cache
+        "--cache-type-k", "bf16",
+        "--cache-type-v", "bf16",
+        "--flash-attn", "on",
+        # No parallel processing
+        "--parallel", "1",
+        "--main-gpu", "0",
+        "--verbose",
+        "--gpu-layers", "all",
+        "--log-prompts-dir", "~/tmp/llama_server_prompts.log",
+        # "--reasoning-format", "deepseek",
+        "--reasoning", "off",
+        "--tensor-split", model.gpu_split_ratio,
+
+        # Multi-Modal Projector
+        # "--mmproj", "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-mmproj-BF16.gguf",
+        # Doesn't fit unless we push the mmproj to the CPU, it slows down image processing a lot.
+        # "--no-mmproj-offload",
+
+        # Network Settings
+        "--host", host_ip,
+        "--port", str(port)
+    ] )
+
 
 def run_gemma4_e4b_f16() -> None:
     model = gemma4_e4b_f6
@@ -94,7 +142,7 @@ def run_gemma4_e4b_f16() -> None:
         "--alias", model.model_name,
         "--model", model.model_file,
         # Doesn't fit in memory when I use 96000
-        "--models-max", "1 -c 96000",
+        "--models-max", "1 -c 64000",
         # NOTE: Accuracy suffers really badly if you quantize the kv cache
         "--cache-type-k", "q16_0",
         "--cache-type-v", "q16_0",
@@ -106,7 +154,6 @@ def run_gemma4_e4b_f16() -> None:
         # "--reasoning-format", "deepseek",
         "--reasoning", "off",
         "--tensor-split", model.gpu_split_ratio,
-        "--tools", "read_file,grep_search",
         "--host", host_ip,
         "--port", str(port)
     ] )
@@ -117,4 +164,5 @@ def run_gemma4_e2b_q4() -> None:
 
 
 run_gemma4_moe()
+run_gemma4_moe_q5_k_s()
 # run_gemma4_e2b()

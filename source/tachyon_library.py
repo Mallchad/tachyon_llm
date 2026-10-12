@@ -7,6 +7,14 @@ import time
 
 dry_run: bool = False
 
+def script_location():
+    # Self-Script Information
+    result = []
+    result.script_name = os.path.basename(sys.argv[0])
+    result.script_dir_relative = os.path.dirname(sys.argv[0])
+    result.script_dir_absolute = os.path.realpath(script_dir_relative)
+
+
 # Self-Script Information
 script_name = os.path.basename(sys.argv[0])
 script_dir_relative = os.path.dirname(sys.argv[0])

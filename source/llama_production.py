@@ -34,8 +34,9 @@ gpu_split_full_both = "8, 12"
 gpu_split_rtx3080_dominant = "10,4"
 gpu_split_rtx3060_dominant = "6,12"
 gpu_split_ratio: str = gpu_split_full_both
-# port: int = 8002
-port: int = 8080
+# Stolen by jitsi meet
+# port: int = 8080
+port: int = 8006
 host_ip = "192.168.1.172"
 
 gemma4_e4b_f16 = llm_config(
@@ -54,15 +55,15 @@ gemma4_e2b_q4 = llm_config(
 gemma4_26_a4b = llm_config(
     "gemma-4-26B-A4B-it-Q4_0",
     "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-Q4_0.gguf",
-    gpu_split_full_both,
+    "6000,12000",
     96000
 )
 
 gemma4_26_a4b_q5 = llm_config(
     "gemma-4-26B-A4B-it-UD-Q5_K_S",
     "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-UD-Q5_K_S.gguf",
-    gpu_split_ratio = gpu_split_full_both,
-    context_size = 64000
+    gpu_split_ratio = "80,120",
+    context_size = 32000
 )
 
 
@@ -80,6 +81,14 @@ def run_gemma4_moe() -> None:
         "--cache-type-k", "bf16",
         "--cache-type-v", "bf16",
         "--flash-attn", "on",
+
+        # Enable multi-token prediction for speed
+        # "--spec-draft-model", "/local/data/neural_net/gguf/mtp-gemma-4-26B-A4B-it.gguf",
+        # "--spec-type", "draft-mtp",
+        # Number of tokens predicted, variable speedup
+        # "--spec-draft-n-max", "1",
+        # "--spec-draft-n-max", "1",
+
         # No parallel processing
         "--parallel", "1",
         "--main-gpu", "0",
@@ -114,11 +123,18 @@ def run_gemma4_moe_q5_k_s() -> None:
         "--cache-type-k", "bf16",
         "--cache-type-v", "bf16",
         "--flash-attn", "on",
+
+        # Enable multi-token prediction for speed
+        # TODO: Why is this not allowign draft-mtp?
+        # "--spec-type", "draft-simple",
+        # "--spec-type", "draft-mtp",
+        # "--spec-draft-n-max", "2",
+
         # No parallel processing
         "--parallel", "1",
         "--main-gpu", "0",
         "--verbose",
-        "--gpu-layers", "all",
+        "--gpu-layers", "30",
         "--log-prompts-dir", "~/tmp/llama_server_prompts.log",
         # "--reasoning-format", "deepseek",
         "--reasoning", "off",
@@ -136,7 +152,7 @@ def run_gemma4_moe_q5_k_s() -> None:
 
 
 def run_gemma4_e4b_f16() -> None:
-    model = gemma4_e4b_f6
+    model = gemma4_e4b_f16
     tyon.execute_list([
         "/usr/bin/llama-server",
         "--alias", model.model_name,
@@ -144,8 +160,8 @@ def run_gemma4_e4b_f16() -> None:
         # Doesn't fit in memory when I use 96000
         "--models-max", "1 -c 64000",
         # NOTE: Accuracy suffers really badly if you quantize the kv cache
-        "--cache-type-k", "q16_0",
-        "--cache-type-v", "q16_0",
+        "--cache-type-k", "bf16",
+        "--cache-type-v", "bf16",
         "--flash-attn", "on",
         "--main-gpu", "0",
         "--verbose",
@@ -164,5 +180,5 @@ def run_gemma4_e2b_q4() -> None:
 
 
 run_gemma4_moe()
-run_gemma4_moe_q5_k_s()
-# run_gemma4_e2b()
+# run_gemma4_moe_q5_k_s()
+# run_gemma4_e4b_f16()

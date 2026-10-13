@@ -37,7 +37,8 @@ gpu_split_ratio: str = gpu_split_full_both
 # Stolen by jitsi meet
 # port: int = 8080
 port: int = 8006
-host_ip = "192.168.1.172"
+# host_ip = "192.168.1.172"
+host_ip = "100.94.72.0"
 
 gemma4_e4b_f16 = llm_config(
     "gemma-4-E4B-BF16",

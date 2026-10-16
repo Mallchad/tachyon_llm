@@ -42,23 +42,25 @@ async def main():
     audio_queue = queue.Queue()
     gemini_samplerate = 24000
     channels = 1
+    pending = np.zeros((0, 1), dtype=np.int16)    # unplayed frames carried between callbacks
 
 
     def audio_callback(outdata, frames, time_info, status):
+        nonlocal pending
         if status:
             print(status, flush=True)
-        try:
-            # Pull exactly the number of frames requested by the audio driver
-            data = audio_queue.get_nowait()
-            if len(data) < len(outdata):
-                outdata[:len(data)] = data
-                outdata[len(data):] = 0
-            else:
-                outdata[:] = data[:len(outdata)]
-        except queue.Empty:
-            # If network lag happens, output silence instead of crackling garbage
-            outdata.fill(0)
-            print( "No audio to play...")
+        while len(pending) < len(outdata):
+            try:
+                pending = np.concatenate([pending, audio_queue.get_nowait()])
+            except queue.Empty:
+                break
+        if len(pending) >= len(outdata):
+            outdata[:] = pending[:len(outdata)]
+            pending = pending[len(outdata):]
+        else:
+            outdata[:len(pending)] = pending       # silence tail
+            outdata[len(pending):] = 0
+            pending = np.zeros((0, 1), dtype=np.int16)
 
     with sd.OutputStream(
             samplerate=gemini_samplerate,
@@ -86,18 +88,21 @@ async def main():
                            # Process or play the audio data
                            print(f"Received audio chunk: {len(audio_data)} bytes")
                            # Convert raw bytes to a numpy array of 16-bit integers
-                           audio_np = np.frombuffer(audio_data, dtype=np.int16)
+                           audio_np = np.frombuffer(audio_data, dtype=np.int16).reshape(-1, 1)
                            chunk_timer.stop_and_log( "Processed audio" )
 
                            # Write chunks directly to your speakers in real-time
                            audio_queue.put(audio_np)
-                           print( audio_queue.len )
+                           print( audio_queue.qsize() )
                            chunk_timer.stop_and_log( "played audio" )
 
                    if response.server_content and response.server_content.turn_complete:
                        break
 
             request_timer.stop_and_log( "Request Complete")
+            while not audio_queue.empty():
+                await asyncio.sleep(0.05)
+            await asyncio.sleep(0.1)
 
 if __name__ == "__main__":
     asyncio.run(main())

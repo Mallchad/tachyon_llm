@@ -56,7 +56,8 @@ gemma4_e2b_q4 = llm_config(
 gemma4_26_a4b = llm_config(
     "gemma-4-26B-A4B-it-Q4_0",
     "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-Q4_0.gguf",
-    "6000,12000",
+    # "6000,12000",
+    "8000,12000",
     96000
 )
 
@@ -68,6 +69,13 @@ gemma4_26_a4b_q5 = llm_config(
 )
 
 
+qwen3_a3b_q4 = llm_config(
+    "Qwen3-Coder-30B-A3B-Instruct-1M-IQ4_XS",
+    "/local/data/neural_net/gguf/Qwen3-Coder-30B-A3B-Instruct-1M-IQ4_XS.gguf",
+    gpu_split_ratio = "7000,12000",
+    # "8000,12000",
+    context_size = 32000
+)
 # model = gemma4_e2b_f16
 
 def run_gemma4_moe() -> None:
@@ -94,7 +102,7 @@ def run_gemma4_moe() -> None:
         "--parallel", "1",
         "--main-gpu", "0",
         "--verbose",
-        "--gpu-layers", "all",
+        # "--gpu-layers", "all",
         "--log-prompts-dir", "~/tmp/llama_server_prompts.log",
         # "--reasoning-format", "deepseek",
         "--reasoning", "off",
@@ -179,7 +187,88 @@ def run_gemma4_e2b_q4() -> None:
     model = gemma4_e2b_q4
     raise Exception()
 
+def run_qwen3_a3b() -> None:
+    model = qwen3_a3b_q4
+    tyon.execute_list([
+        "/usr/bin/llama-server",
+        "--alias", model.model_name,
+        "--model", model.model_file,
+        "--models-max", "1",
+        "-c", str(model.context_size),
+        # NOTE: Accuracy suffers really badly if you quantize the kv cache
+        "--cache-type-k", "bf16",
+        "--cache-type-v", "bf16",
+        "--cache-ram", "32000",
+
+        "--flash-attn", "on",
+
+        # No parallel processing
+        "--parallel", "1",
+        "--main-gpu", "0",
+        "--verbose",
+        "--gpu-layers", "all",
+        "--log-prompts-dir", "~/tmp/llama_server_prompts.log",
+        # "--reasoning", "off",
+
+        "--split-mode", "layer", # defaut
+        "--tensor-split", model.gpu_split_ratio,
+
+        # Multi-Modal Projector
+        # "--mmproj", "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-mmproj-BF16.gguf",
+        # Doesn't fit unless we push the mmproj to the CPU, it slows down image processing a lot.
+        "--no-mmproj-offload",
+
+        # Network Settings
+        "--host", host_ip,
+        "--port", str(port)
+    ] )
+
+qwen3_8_27B_q4 = llm_config(
+    "Qwen3.8-27B-UD-IQ4_XS",
+    "/local/data/neural_net/gguf/Qwen3.8-27B-UD-IQ4_XS.gguf",
+    gpu_split_ratio = "7000,12000",
+    # "8000,12000",
+    context_size = 16000
+)
+def run_qwen3_8_27b() -> None:
+    model = qwen3_8_27B_q4
+    tyon.execute_list([
+        "/usr/bin/llama-server",
+        "--alias", model.model_name,
+        "--model", model.model_file,
+        "--models-max", "1",
+        "-c", str(model.context_size),
+        # NOTE: Accuracy suffers really badly if you quantize the kv cache
+        "--cache-type-k", "bf16",
+        "--cache-type-v", "bf16",
+        "--cache-ram", "32000",
+
+        "--flash-attn", "on",
+
+        # No parallel processing
+        "--parallel", "1",
+        "--main-gpu", "0",
+        "--verbose",
+        "--gpu-layers", "all",
+        "--log-prompts-dir", "~/tmp/llama_server_prompts.log",
+        "--reasoning", "on",
+
+        "--split-mode", "layer", # defaut
+        "--tensor-split", model.gpu_split_ratio,
+
+        # Multi-Modal Projector
+        # "--mmproj", "/local/data/neural_net/gguf/gemma-4-26B-A4B-it-mmproj-BF16.gguf",
+        # Doesn't fit unless we push the mmproj to the CPU, it slows down image processing a lot.
+        "--no-mmproj-offload",
+
+        # Network Settings
+        "--host", host_ip,
+        "--port", str(port)
+    ] )
+
 
 run_gemma4_moe()
+# run_qwen3_a3b()
+# run_qwen3_8_27b()
 # run_gemma4_moe_q5_k_s()
 # run_gemma4_e4b_f16()

@@ -7,27 +7,40 @@
 # The credentials below are placeholders for local evaluation. Before any real
 # use, download this file and set LITELLM_MASTER_KEY and LITELLM_SALT_KEY to
 # long random values, and pin the image to a release tag instead of `latest`.
+networks:
+  llm:
+    external: true
+
 services:
   litellm:
     image: docker.litellm.ai/berriai/litellm:latest
+    command: [ "--config", "/app/data/litellm/config.yaml" ]
+
     networks:
       - llm
     ports:
       - "4000:4000"
       - "8002:8002"
     environment:
+      CONFIG_FILE_PATH: "/app/data/litellm/config.yaml"
       LITELLM_MASTER_KEY:  <litellm_master_key>
-      LITELLM_SALT_KEY: <litellm_stub_key>
+      LITELLM_SALT_KEY: <litellm_salt_key>
       DATABASE_URL: postgresql://litellm:litellm@db:5432/litellm
       STORE_MODEL_IN_DB: "True"
+
+      # Mount the repository data into the container for easy access
+    volumes:
+      - ./data:/app/data
     depends_on:
       db:
         condition: service_healthy
 
   db:
     image: postgres:16
+    networks:
+      - llm
+
     environment:
-      # Hidden inside of container
       POSTGRES_USER: litellm
       POSTGRES_PASSWORD: litellm
       POSTGRES_DB: litellm
@@ -38,8 +51,6 @@ services:
       retries: 10
     volumes:
       - postgres_data:/var/lib/postgresql/data
-networks:
-  llm:
 
 volumes:
   postgres_data:

@@ -59,16 +59,12 @@ def execute( command ):
         return (completed and completed.returncode or 1)
 
 def execute_list( command_list: list ) -> int:
-    commands = None
-    if type( command_list[0] ) == "list":
-        commands = command_list[0]
-    else:
-        commands = [*command_list]
+    commands = command_list
     if dry_run:
         tyon_log( f"(dry run) executing command: \"{commands}\"" )
         return 0
     else:
-        tyon_log( f"executing command: '{commands}'" )
+        tyon_log( f"executing command: \n{commands}" )
         completed = None
         # check = false silences exception on command non-successful exit but not other exceptions
         try: completed = subprocess.run( commands, check = False )

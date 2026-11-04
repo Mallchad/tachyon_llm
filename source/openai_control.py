@@ -1,3 +1,4 @@
+import json
 from typing import NamedTuple
 import requests
 
@@ -63,15 +64,33 @@ def request_curl() -> None:
     ])
 
 def request_python() -> None:
-    response = requests.post(
+    log_path = "../transient/logs/openai_stream.log"
+    full_message = ""
+    with requests.post(
         request_url,
         headers={
             "Content-Type": "application/json",
             "Authorization": f"Bearer {api_key}",
         },
         data=json_payload,
-    )
-    tyon.tyon_log( "Response:", response.text )
+        stream=True,
+    ) as response, open(log_path, "w", encoding="utf-8") as log_file:
+        for line in response.iter_lines(decode_unicode=True):
+            if not line:
+                continue
+            log_file.write(line + "\n")
+            log_file.flush()
+
+            data_str = line.removeprefix("data: ").strip()
+            if data_str == "[DONE]":
+                break
+
+            chunk = json.loads(data_str)
+            content = chunk["choices"][0].get("delta", {}).get("content", "")
+            if content:
+                full_message += content
+                print(content, end="", flush=True)
+    print()
 
 # request_curl()
 request_python()

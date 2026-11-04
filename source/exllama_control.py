@@ -2,6 +2,7 @@ from typing import NamedTuple
 
 import tachyon_library as tyon
 
+import asyncio
 import json
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
@@ -44,12 +45,12 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
         # prompt = tokenizer.hf_chat_template.apply_chat_template(
             # body["messages"], tokenize=False, add_generation_prompt=True
         )
-        input_ids = tokenizer.encode(prompt, add_bos=False)
+        input_ids = tokenizer.encode(prompt, add_bos=False, encode_special_tokens=True)
 
         job = Job(
             input_ids=input_ids,
             max_new_tokens=body.get("max_completion_tokens", body.get("max_tokens", 2048)),
-            stop_conditions=[tokenizer.eos_token_id],
+            stop_conditions=config.eos_token_id_list,
             sampler=ComboSampler(temperature=body.get("temperature", 0.7))
         )
         generator.enqueue(job)
@@ -60,6 +61,7 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
                     if r["stage"] == "streaming" and "text" in r:
                         chunk = {"choices": [{"delta": {"content": r["text"]}}]}
                         yield f"data: {json.dumps(chunk)}\n\n"
+                        await asyncio.sleep(0)
             yield "data: [DONE]\n\n"
 
         return StreamingResponse(stream(), media_type="text/event-stream")

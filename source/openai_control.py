@@ -65,7 +65,6 @@ def request_curl() -> None:
 
 def request_python() -> None:
     log_path = "../transient/logs/openai_stream.log"
-    full_message = ""
     with requests.post(
         request_url,
         headers={
@@ -75,7 +74,7 @@ def request_python() -> None:
         data=json_payload,
         stream=True,
     ) as response, open(log_path, "w", encoding="utf-8") as log_file:
-        for line in response.iter_lines(decode_unicode=True):
+        for line in response.iter_lines(chunk_size=None, decode_unicode=True):
             if not line:
                 continue
             log_file.write(line + "\n")
@@ -88,7 +87,8 @@ def request_python() -> None:
             chunk = json.loads(data_str)
             content = chunk["choices"][0].get("delta", {}).get("content", "")
             if content:
-                full_message += content
+                # flush = true is not necessary but it makes it much lower
+                # latency at the cost of CPU usage
                 print(content, end="", flush=True)
     print()
 

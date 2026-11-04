@@ -1,0 +1,77 @@
+from typing import NamedTuple
+import requests
+
+import tachyon_library as tyon
+
+exllama_base_url = "http://127.1:8010/"
+base_url = exllama_base_url
+endpoint_completions = "v1/chat/completions"
+endpoint_models = "v1/models"
+
+endpoint_url = endpoint_completions
+request_url = exllama_base_url + endpoint_url
+tyon.tyon_log( "Endpoint:", request_url )
+
+# curl "https://api.groq.com/openai" \
+#   -X POST \
+#   -H "Content-Type: application/json" \
+#   -H "Authorization: Bearer ${GROQ_API_KEY}" \
+#   -d '{
+#          "messages": [
+#            {
+#              "role": "user",
+#              "content": "Write a poem about cherry blossoms"
+#            }
+#          ],
+#          "model": "qwen/qwen3.8-27b",
+#          "temperature": 1,
+#          "max_completion_tokens": 2048,
+#          "top_p": 1,
+#          "stream": false,
+#          "reasoning_effort": "medium",
+#          "stop": null
+#        }'
+
+# curl "https://api.groq.com/openai/v1/models"
+
+api_key = "xxx"
+
+json_payload = '''{
+         "messages": [
+           {
+             "role": "user",
+             "content": "Write a poem about cherry blossoms"
+           }
+         ],
+         "model": "qwen/qwen3.8-27b",
+         "temperature": 1,
+         "max_completion_tokens": 2048,
+         "top_p": 1,
+         "stream": false,
+         "reasoning_effort": "low"
+       }'''
+tyon.tyon_log( "json_payload: ", json_payload )
+
+def request_curl() -> None:
+    tyon.execute_list( [
+        "curl",
+        request_url,
+        "--request", "POST",
+        "--header", "Content-Type: application/json",
+        "--header", f"Authorization: Bearer {api_key}",
+        "--data", json_payload
+    ])
+
+def request_python() -> None:
+    response = requests.post(
+        request_url,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        data=json_payload,
+    )
+    tyon.tyon_log( "Response:", response.text )
+
+# request_curl()
+request_python()

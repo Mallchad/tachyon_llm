@@ -60,7 +60,6 @@ gemma4_e4b_q8 = llm_config(
 gemma4_e2b_q4 = llm_config(
     "gemma-4-E2B-it-Q4_0",
     "/local/data/neural_net/gguf/gemma-4-E2B-it-Q4_0.gguf",
-    # "10,12",
     gpu_split_rtx3080_only,
     # gpu_split_rtx3060_only,
     64000
@@ -229,7 +228,35 @@ def run_gemma4_e4b_q8() -> None:
 
 def run_gemma4_e2b_q4() -> None:
     model = gemma4_e2b_q4
-    raise Exception()
+    tyon.execute_list([
+    "/usr/bin/llama-server",
+    "--alias", model.model_name,
+    "--model", model.model_file,
+
+        "--parallel", "1",
+        # Doesn't fit in memory when I use 96000
+        "--models-max", "1",
+        "-c", str(model.context_size),
+        # NOTE: Accuracy suffers really badly if you quantize the kv cache
+        "--cache-type-k", "bf16",
+        "--cache-type-v", "bf16",
+        "--flash-attn", "on",
+        "--main-gpu", "0",
+
+        "--batch-size", "4096",
+        "--ubatch-size", "4096",
+
+        # does verbose slow generation?
+        # "--verbose",
+
+        "--gpu-layers", "all",
+        "--log-prompts-dir", "~/tmp/llama_server_prompts.log",
+        # "--reasoning-format", "deepseek",
+        "--reasoning", "off",
+        "--tensor-split", model.gpu_split_ratio,
+        "--host", host_ip,
+        "--port", str(port)
+] )
 
 def run_qwen3_a3b() -> None:
     model = qwen3_a3b_q4
@@ -362,6 +389,7 @@ def run_talkie_1930_q8() -> None:
 
 
 run_gemma4_moe()
+# run_gemma4_e2b_q4()
 # run_qwen3_a3b()
 # run_qwen3_8_27b()
 # run_gemma4_moe_q5_k_s()

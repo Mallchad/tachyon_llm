@@ -37,24 +37,19 @@ tyon.tyon_log( "Endpoint:", request_url )
 
 api_key = "xxx"
 
-prompt_unsanitized = "Write a poem about cherry blossoms"
-prompt_unsanitized = ("""Write a very simple Vulkan program that draws a cube with X11 in C++.
-keep it in a single file.
-Do not talk to the user they will not be reading the content and will not response after the fact.
-Do do not behave like an assistant, simply do the task.
+class prompt_args(NamedTuple):
+    prompt: str
+    reasoning_effort: str = "low"
+    max_tokens: int = 64000,
+    seed: int = 0
 
-Use snake_case formatting
-Use expanded GNU style function brackets add( 5 ) instead of add(5)
-Use initializer lists instead of member access operators where possible to take advantage of explicit intialization rules
-Typedef all Vulkan types to a snake_case equivilant
-Use Xlib not xcb, nobody uses xcb because nobody understands it as Xlib is well documented and xcb is not.
-"""
-)
 # Sanitize newlines chars for json
-prompt = prompt_unsanitized.encode("unicode_escape").decode("utf-8")
-print( "Prompt:", prompt_unsanitized )
+def request_curl( args: prompt_args ) -> None:
+    prompt_unsanitized = args.prompt
+    prompt = prompt_unsanitized.encode("unicode_escape").decode("utf-8")
+    print( "Prompt:", prompt_unsanitized )
 
-json_payload = '''{
+    json_payload = '''{
          "messages": [
            {
              "role": "user",
@@ -68,9 +63,8 @@ json_payload = '''{
          "stream": true,
          "reasoning_effort": "low"
        }''' % prompt
-tyon.tyon_log( "json_payload: ", json_payload )
+    tyon.tyon_log( "json_payload: ", json_payload )
 
-def request_curl() -> None:
     tyon.execute_list( [
         "curl",
         request_url,
@@ -80,9 +74,30 @@ def request_curl() -> None:
         "--data", json_payload
     ])
 
-def request_python() -> None:
+def request_python( args: prompt_args ) -> None:
     log_path = "../transient/logs/openai_stream.log"
     usage = None
+
+    prompt_unsanitized = args.prompt
+    prompt = prompt_unsanitized.encode("unicode_escape").decode("utf-8")
+    print( "Prompt:", prompt_unsanitized )
+
+    json_payload = '''{
+         "messages": [
+           {
+             "role": "user",
+             "content": "%s"
+           }
+         ],
+         "model": "qwen/qwen3.8-27b",
+         "temperature": 0.8,
+         "max_completion_tokens": 30000,
+         "top_p": 1,
+         "stream": true,
+         "reasoning_effort": "low"
+       }''' % prompt
+    tyon.tyon_log( "json_payload: ", json_payload )
+
     with requests.post(
         request_url,
         headers={
@@ -119,5 +134,12 @@ def request_python() -> None:
             f"Prompt: {usage.get('prompt_tokens')} tokens ({usage.get('prompt_tokens_per_sec')} tok/s)"
         )
 
-# request_curl()
-request_python()
+if __name__ == "__main__":
+
+    prompt_unsanitized = "Write a poem about cherry blossoms"
+
+    request = prompt_args(
+        prompt = prompt_unsanitized
+    )
+    # request_curl()
+    request_python( request )

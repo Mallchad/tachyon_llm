@@ -65,6 +65,7 @@ def request_curl() -> None:
 
 def request_python() -> None:
     log_path = "../transient/logs/openai_stream.log"
+    usage = None
     with requests.post(
         request_url,
         headers={
@@ -85,12 +86,21 @@ def request_python() -> None:
                 break
 
             chunk = json.loads(data_str)
-            content = chunk["choices"][0].get("delta", {}).get("content", "")
+            if "usage" in chunk:
+                usage = chunk["usage"]
+            choices = chunk.get("choices", [])
+            content = choices[0].get("delta", {}).get("content", "") if choices else ""
             if content:
                 # flush = true is not necessary but it makes it much lower
                 # latency at the cost of CPU usage
                 print(content, end="", flush=True)
     print()
+    if usage:
+        tyon.tyon_log(
+            f"Generation complete: {usage.get('completion_tokens')} tokens in "
+            f"{usage.get('time_generate')}s ({usage.get('tokens_per_sec')} tok/s) | "
+            f"Prompt: {usage.get('prompt_tokens')} tokens ({usage.get('prompt_tokens_per_sec')} tok/s)"
+        )
 
 # request_curl()
 request_python()

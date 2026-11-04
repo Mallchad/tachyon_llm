@@ -22,7 +22,7 @@ gemma4_26_a4b = llm_config(
     model_name = "gemma-4-26B-A4B-it-4.10bpw",
     model_file = "/local/data/neural_net/exl3/gemma-4-26B-A4B-it-3.54bpw",
     gpu_split_ratio = [11,13],
-    context_size = 8192
+    context_size = 96000
 )
 
 def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
@@ -62,10 +62,34 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
                         chunk = {"choices": [{"delta": {"content": r["text"]}}]}
                         yield f"data: {json.dumps(chunk)}\n\n"
                         await asyncio.sleep(0)
+
+                    if r.get("eos"):
+                        gen_tps = r["new_tokens"] / r["time_generate"] if r["time_generate"] > 0 else 0.0
+                        prefill_tps = r["prompt_tokens"] / r["time_prefill"] if r["time_prefill"] > 0 else 0.0
+                        tyon.tyon_log(
+                            f"Prompt: {r['prompt_tokens']} tok (cached: {r['cached_tokens']}) "
+                            f"in {r['time_prefill']:.2f}s ({prefill_tps:.1f} tok/s) | "
+                            f"Gen: {r['new_tokens']} tok in {r['time_generate']:.2f}s ({gen_tps:.2f} tok/s)"
+                        )
+                        usage_chunk = {
+                            "choices": [{"delta": {}, "finish_reason": r.get("eos_reason", "stop")}],
+                            "usage": {
+                                "prompt_tokens": r["prompt_tokens"],
+                                "completion_tokens": r["new_tokens"],
+                                "total_tokens": r["prompt_tokens"] + r["new_tokens"],
+                                "cached_tokens": r["cached_tokens"],
+                                "time_prefill": round(r["time_prefill"], 4),
+                                "time_generate": round(r["time_generate"], 4),
+                                "prompt_tokens_per_sec": round(prefill_tps, 2),
+                                "tokens_per_sec": round(gen_tps, 2),
+                            },
+                        }
+                        yield f"data: {json.dumps(usage_chunk)}\n\n"
+                        await asyncio.sleep(0)
             yield "data: [DONE]\n\n"
 
         return StreamingResponse(stream(), media_type="text/event-stream")
 
     uvicorn.run(app, host=host_ip, port=port)
 
-serve_gemma4_exl3( gemma4_26_a4b, "127.1", 8010 )
+serve_gemma4_exl3( gemma4_26_a4b, "100.94.72.0", 8010 )

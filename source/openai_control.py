@@ -97,6 +97,7 @@ def request_python( args: prompt_args ) -> None:
          "reasoning_effort": "low"
        }''' % prompt
     tyon.tyon_log( "json_payload: ", json_payload )
+    tyon.tyon_log( "Response: ", json_payload )
 
     with requests.post(
         request_url,

@@ -67,7 +67,8 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
             stop_conditions=config.eos_token_id_list,
             sampler=ComboSampler(temperature=body.get("temperature", 0.7))
         )
-        generator.enqueue(job)
+        generator.clear_queue()
+        serial = generator.enqueue(job)
 
         def build_usage(r: dict) -> dict:
             gen_tps = r["new_tokens"] / r["time_generate"] if r["time_generate"] > 0 else 0.0
@@ -91,12 +92,17 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
         if not body.get("stream", False):
             full_text = ""
             usage = {}
-            while generator.num_remaining_jobs():
-                for r in generator.iterate():
-                    if r["stage"] == "streaming" and "text" in r:
-                        full_text += r["text"]
-                    if r.get("eos"):
-                        usage = build_usage(r)
+            try:
+                while generator.num_remaining_jobs():
+                    for r in generator.iterate():
+                        if r.get("serial") != serial:
+                            continue
+                        if r["stage"] == "streaming" and "text" in r:
+                            full_text += r["text"]
+                        if r.get("eos"):
+                            usage = build_usage(r)
+            finally:
+                generator.cancel(job)
             return {
                 "id": f"chatcmpl-{created}",
                 "object": "chat.completion",
@@ -111,31 +117,38 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
             }
 
         async def stream():
-            while generator.num_remaining_jobs():
-                for r in generator.iterate():
-                    if r["stage"] == "streaming" and "text" in r:
-                        chunk = {
-                            "id": f"chatcmpl-{created}",
-                            "object": "chat.completion.chunk",
-                            "created": created,
-                            "model": model_id,
-                            "choices": [{"index": 0, "delta": {"content": r["text"]}, "finish_reason": None}],
-                        }
-                        yield f"data: {json.dumps(chunk)}\n\n"
-                        await asyncio.sleep(0)
+            try:
+                while generator.num_remaining_jobs():
+                    if await req.is_disconnected():
+                        break
+                    for r in generator.iterate():
+                        if r.get("serial") != serial:
+                            continue
+                        if r["stage"] == "streaming" and "text" in r:
+                            chunk = {
+                                "id": f"chatcmpl-{created}",
+                                "object": "chat.completion.chunk",
+                                "created": created,
+                                "model": model_id,
+                                "choices": [{"index": 0, "delta": {"content": r["text"]}, "finish_reason": None}],
+                            }
+                            yield f"data: {json.dumps(chunk)}\n\n"
+                            await asyncio.sleep(0)
 
-                    if r.get("eos"):
-                        usage_chunk = {
-                            "id": f"chatcmpl-{created}",
-                            "object": "chat.completion.chunk",
-                            "created": created,
-                            "model": model_id,
-                            "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
-                            "usage": build_usage(r),
-                        }
-                        yield f"data: {json.dumps(usage_chunk)}\n\n"
-                        await asyncio.sleep(0)
-            yield "data: [DONE]\n\n"
+                        if r.get("eos"):
+                            usage_chunk = {
+                                "id": f"chatcmpl-{created}",
+                                "object": "chat.completion.chunk",
+                                "created": created,
+                                "model": model_id,
+                                "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                                "usage": build_usage(r),
+                            }
+                            yield f"data: {json.dumps(usage_chunk)}\n\n"
+                            await asyncio.sleep(0)
+                yield "data: [DONE]\n\n"
+            finally:
+                generator.cancel(job)
 
         return StreamingResponse(stream(), media_type="text/event-stream")
 

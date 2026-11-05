@@ -11,6 +11,7 @@ import uvicorn
 from exllamav3 import Config, Model, Cache, Tokenizer, Generator, Job, ComboSampler
 from transformers import AutoTokenizer
 
+tyon.tyon_log( "Starting interpreting" )
 
 class llm_config(NamedTuple):
     model_name: str
@@ -22,11 +23,19 @@ class llm_config(NamedTuple):
 gemma4_26_a4b = llm_config(
     model_name = "gemma-4-26B-A4B-it-4.10bpw",
     model_file = "/local/data/neural_net/exl3/gemma-4-26B-A4B-it-3.54bpw",
-    gpu_split_ratio = [10,12],
-    context_size = 32000
+    gpu_split_ratio = [8,11],
+    context_size = 32768
 )
 
-def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
+qwen3_8_27b = llm_config(
+    model_name = "Qwen3.8-27B-exl3-3.50bpw",
+    model_file = "/local/data/neural_net/exl3/Qwen3.8-27B-exl3-3.50bpw",
+    gpu_split_ratio = [8,11],
+    # context_size = 32768
+    context_size = 65536
+)
+
+def exllama_serve_model(cfg: llm_config, host_ip: str, port: int) -> None:
     config = Config.from_directory(cfg.model_file)
     model = Model.from_config(config)
     cache = Cache(model, max_num_tokens=cfg.context_size)
@@ -34,6 +43,7 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
     tokenizer = Tokenizer.from_config(config)
     hf_tokenizer = AutoTokenizer.from_pretrained(cfg.model_file)
     generator = Generator(model=model, cache=cache, tokenizer=tokenizer)
+    gen_lock = asyncio.Lock()
 
     app = FastAPI()
 
@@ -53,22 +63,46 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
         body = await req.json()
         model_id = body.get("model", cfg.model_name)
         created = int(time.time())
+
+        messages = body.get("messages", [])
+        tyon.tyon_log( "Request: ", messages )
+
+        for msg in body.get("messages", []):
+            if isinstance(msg.get("content"), list):
+                msg["content"] = "\n".join(
+                    part.get("text", "") for part in msg["content"]
+                    if isinstance(part, dict) and part.get("type") == "text"
+                )
+            elif msg.get("content") is None:
+                msg["content"] = ""
+            for tc in msg.get("tool_calls") or []:
+                fn = tc.get("function")
+                if isinstance(fn, dict) and isinstance(fn.get("arguments"), str):
+                    try:
+                        fn["arguments"] = json.loads(fn["arguments"])
+                    except json.JSONDecodeError:
+                        pass
+
         # Format prompt using the model's tokenizer template
+        # prompt = hf_tokenizer.apply_chat_template(
+                # body["messages"], tokenize=False, add_generation_prompt=True
         prompt = hf_tokenizer.apply_chat_template(
-                body["messages"], tokenize=False, add_generation_prompt=True
+            body["messages"],
+            tools=body.get("tools"),
+            tokenize=False,
+            add_generation_prompt=True
+        )
         # prompt = tokenizer.hf_chat_template.apply_chat_template(
             # body["messages"], tokenize=False, add_generation_prompt=True
-        )
+        # )
         input_ids = tokenizer.encode(prompt, add_bos=False, encode_special_tokens=True)
 
         job = Job(
             input_ids=input_ids,
-            max_new_tokens=body.get("max_completion_tokens", body.get("max_tokens", 30000)),
+            max_new_tokens = body.get("max_completion_tokens", body.get("max_tokens", 30000)),
             stop_conditions=config.eos_token_id_list,
             sampler=ComboSampler(temperature=body.get("temperature", 0.7))
         )
-        generator.clear_queue()
-        serial = generator.enqueue(job)
 
         def build_usage(r: dict) -> dict:
             gen_tps = r["new_tokens"] / r["time_generate"] if r["time_generate"] > 0 else 0.0
@@ -92,6 +126,9 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
         if not body.get("stream", False):
             full_text = ""
             usage = {}
+            finished = False
+            async with gen_lock:
+                serial = generator.enqueue(job)
             try:
                 while generator.num_remaining_jobs():
                     for r in generator.iterate():
@@ -102,7 +139,8 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
                         if r.get("eos"):
                             usage = build_usage(r)
             finally:
-                generator.cancel(job)
+                if not finished:
+                    generator.cancel(job)
             return {
                 "id": f"chatcmpl-{created}",
                 "object": "chat.completion",
@@ -117,6 +155,10 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
             }
 
         async def stream():
+            finished = False
+            async with gen_lock:
+                serial = generator.enqueue(job)
+
             try:
                 while generator.num_remaining_jobs():
                     if await req.is_disconnected():
@@ -136,6 +178,7 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
                             await asyncio.sleep(0)
 
                         if r.get("eos"):
+                            finished = True
                             usage_chunk = {
                                 "id": f"chatcmpl-{created}",
                                 "object": "chat.completion.chunk",
@@ -146,12 +189,16 @@ def serve_gemma4_exl3(cfg: llm_config, host_ip: str, port: int) -> None:
                             }
                             yield f"data: {json.dumps(usage_chunk)}\n\n"
                             await asyncio.sleep(0)
+                    asyncio.sleep(0)
                 yield "data: [DONE]\n\n"
             finally:
-                generator.cancel(job)
+                if not finished:
+                    generator.cancel(job)
 
         return StreamingResponse(stream(), media_type="text/event-stream")
 
     uvicorn.run(app, host=host_ip, port=port)
 
-serve_gemma4_exl3( gemma4_26_a4b, "100.94.72.0", 8010 )
+tyon.tyon_log( "Program start" )
+#exllama_serve_model( gemma4_26_a4b, "100.94.72.0", 8010 )
+exllama_serve_model( qwen3_8_27b, "100.94.72.0", 8010 )

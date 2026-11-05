@@ -35,10 +35,12 @@ tyon.tyon_log( "Endpoint:", request_url )
 
 # curl "https://api.groq.com/openai/v1/models"
 
-api_key = "xxx"
+api_key = tyon.os.environ.get( "TYON_OPENAI_API_KEY", "")
 
 class prompt_args(NamedTuple):
     prompt: str
+    request_url: str = request_url
+    model: str = "exllama/generic"
     reasoning_effort: str = "low"
     max_tokens: int = 64000,
     seed: int = 0
@@ -81,6 +83,7 @@ def request_python( args: prompt_args ) -> None:
     prompt_unsanitized = args.prompt
     prompt = prompt_unsanitized.encode("unicode_escape").decode("utf-8")
     print( "Prompt:", prompt_unsanitized )
+    request_url = args.request_url + "/v1/chat/completions"
 
     json_payload = '''{
          "messages": [
@@ -89,7 +92,7 @@ def request_python( args: prompt_args ) -> None:
              "content": "%s"
            }
          ],
-         "model": "qwen/qwen3.8-27b",
+         "model": "exllama/generic",
          "temperature": 0.8,
          "max_completion_tokens": 30000,
          "top_p": 1,
@@ -97,7 +100,6 @@ def request_python( args: prompt_args ) -> None:
          "reasoning_effort": "low"
        }''' % prompt
     tyon.tyon_log( "json_payload: ", json_payload )
-    tyon.tyon_log( "Response: ", json_payload )
 
     with requests.post(
         request_url,
@@ -127,7 +129,8 @@ def request_python( args: prompt_args ) -> None:
                 # flush = true is not necessary but it makes it much lower
                 # latency at the cost of CPU usage
                 print(content, end="", flush=True)
-    print()
+
+        print( response )
     if usage:
         tyon.tyon_log(
             f"Generation complete: {usage.get('completion_tokens')} tokens in "
@@ -135,12 +138,17 @@ def request_python( args: prompt_args ) -> None:
             f"Prompt: {usage.get('prompt_tokens')} tokens ({usage.get('prompt_tokens_per_sec')} tok/s)"
         )
 
+def request_python_quick( prompt_: str ):
+    request = prompt_args( prompt = prompt_ )
+    request_python( request )
+
 if __name__ == "__main__":
 
     prompt_unsanitized = "Write a poem about cherry blossoms"
 
     request = prompt_args(
-        prompt = prompt_unsanitized
+        prompt = prompt_unsanitized,
+        request_url = "http://100.94.72.0:4000"
     )
     # request_curl()
     request_python( request )
